@@ -54,6 +54,31 @@ plot_calibration_purchases_vs_holdout_purchases(bgf, summary_cal_holdout)
 from lifetimes.plotting import plot_history_alive
 
 id = 35
-days_since_birth = 200
+days_since_birth = 365
 sp_trans = df.loc[df['id'] == id]
+# sp_trans
 plot_history_alive(bgf, days_since_birth, sp_trans, 'date')
+
+
+
+conv.iloc[id]
+
+
+conv.iloc[id, 2]
+
+
+x = conv.idxmax(0)['frequency']
+x
+
+conv.median()['frequency']
+
+conv.iloc[6]['frequency']
+
+# data[data.performance==data.median()['performance']]
+x = conv[conv.frequency==conv.median()['frequency']].iloc[0].name
+
+
+
+conv
+
+conv.loc[conv['frequency'] > 130]
