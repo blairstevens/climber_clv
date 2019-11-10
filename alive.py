@@ -8,30 +8,34 @@ db = "database/8anu.db"
 
 conn = sq.connect(db)
 cur = conn.cursor()
-cur.execute('SELECT user_id, date FROM ascent LIMIT 2000000')
+cur.execute('SELECT user_id, date FROM ascent WHERE date>1 LIMIT 375000')
 
 rows = cur.fetchall()
 
 len(rows)
 
 df = pd.DataFrame(rows, columns=['id','date'])
+
+df.info(verbose=True)
+
+df.nsmallest(40, 'date')
+df.describe()
+
 df['date'] = pd.to_datetime(df['date'], unit='s')
 
-# df
+conv = summary_data_from_transaction_data(df, 'id', 'date', freq='M')
 
-conv = summary_data_from_transaction_data(df, 'id', 'date', freq='W')
+conv
 
-# conv
-
-bgf = BetaGeoFitter(penalizer_coef=1)
+bgf = BetaGeoFitter(penalizer_coef=0)
 bgf.fit(conv['frequency'], conv['recency'], conv['T'])
 
 bgf.summary
 bgf.params_
 
-plot = plot_frequency_recency_matrix(bgf)
+# plot = plot_frequency_recency_matrix(bgf)
 
-prob = plot_probability_alive_matrix(bgf)
+# prob = plot_probability_alive_matrix(bgf)
 
 t = 1
 conv['predicted_purchases'] = bgf.conditional_expected_number_of_purchases_up_to_time(t, conv['frequency'], conv['recency'], conv['T'])
@@ -39,4 +43,17 @@ conv.sort_values(by='predicted_purchases').tail(5)
 
 plot_period_transactions(bgf)
 
-summary_cal_holdout = calibration_and_holdout_data(df, 'id', 'date', calibration_period_end='2008-01-01', observation_period_end='2017-01-01' )
+summary_cal_holdout = calibration_and_holdout_data(df, 'id', 'date', calibration_period_end='2010-01-01', observation_period_end='2017-01-01' )
+
+print(summary_cal_holdout.head())
+
+bgf.fit(summary_cal_holdout['frequency_cal'], summary_cal_holdout['recency_cal'], summary_cal_holdout['T_cal'])
+plot_calibration_purchases_vs_holdout_purchases(bgf, summary_cal_holdout)
+
+
+from lifetimes.plotting import plot_history_alive
+
+id = 35
+days_since_birth = 200
+sp_trans = df.loc[df['id'] == id]
+plot_history_alive(bgf, days_since_birth, sp_trans, 'date')
